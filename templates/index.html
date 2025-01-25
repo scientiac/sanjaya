@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Morse Code Decoder</title>
+  <style>
+    :root {
+      --light-bg: #f5f5f5;
+      --light-text: #333;
+      --light-card: #ffffff;
+      --dark-bg: #2e2e2e;
+      --dark-text: #f5f5f5;
+      --dark-card: #3c3c3c;
+      --primary-color: #4caf50;
+      --secondary-color: #007BFF;
+      --border-radius: 8px;
+      --box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background-color: var(--light-bg);
+      color: var(--light-text);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    body.dark-mode {
+      background-color: var(--dark-bg);
+      color: var(--dark-text);
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap:  20px 10px;
+      padding: 20px;
+      width: 100%;
+      max-width: 1200px;
+      box-sizing: border-box;
+    }
+
+    .header-container > p {
+      text-align: center;
+    }
+
+    .header-container > h1 {
+      text-align: center;
+    }
+
+    .saved-sentences-container {
+      grid-column: span 1; /* Default to span 1 column */
+    }
+
+    /* Media query for larger screens */
+    @media (min-width: 900px) {
+      .saved-sentences-container {
+        grid-column: span 3; /* Make the last box take the full width on larger screens */
+      }
+    }
+
+    .box {
+      background-color: var(--light-card);
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      padding: 5px 10px;
+      min-height: 100%;
+      transition: background-color 0.3s, box-shadow 0.3s;
+      text-align: center;
+    }
+
+    body.dark-mode .box {
+      background-color: var(--dark-card);
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+
+    p {
+      font-size: 1rem;
+      margin: 10px 0;
+    }
+
+    ul {
+      list-style-type: none;
+      padding: 0;           
+      margin: 0;
+    }
+
+    .output {
+      border-radius: var(--border-radius);
+      padding: 10px;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+
+    .output span {
+      display: block;
+      background-color: var(--light-bg);
+      padding: 10px;
+      margin: 5px 0;
+      border-radius: var(--border-radius);
+      text-align: center;
+      transition: background-color 0.3s;
+    }
+
+    body.dark-mode .output span {
+      background-color: var(--dark-bg);
+    }
+
+    .suggestions ul {
+      list-style: none;
+      padding: 23px 0;
+      margin: 0;
+    }
+
+    #generated_sentence {
+      margin-top: 18px;
+    }
+
+    .suggestions li {
+      background-color: var(--secondary-color);
+      color: #ffffff;
+      padding: 10px;
+      border-radius: var(--border-radius);
+      margin: 5px 0;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .suggestions li.highlight {
+      background-color: #000000;
+    }
+
+    .saved-sentences-container {
+      overflow-y: auto;
+      max-height: 400px;
+    }
+
+    .saved-sentences-list li {
+      background-color: var(--primary-color);
+      color: #ffffff;
+      padding: 10px;
+      border-radius: var(--border-radius);
+      margin: 5px 0;
+    }
+
+    #mode_indicator {
+      font-size: 3rem;
+      text-decoration: underline; 
+      text-decoration-color: var(--secondary-color);
+      text-decoration-thickness: 5px;
+      border-radius: var(--border-radius);
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    #morse_code, #decoded_message, #word_selection_list {
+      font-weight: normal;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        background-color: var(--dark-bg);
+        color: var(--dark-text);
+      }
+
+      .box {
+        background-color: var(--dark-card);
+      }
+
+      .output span {
+        background-color: var(--dark-bg);
+      }
+
+      .suggestions li {
+        background-color: #0056b3;
+      }
+
+      .saved-sentences-list li {
+        background-color: var(--primary-color);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header-container">
+    <h1>संजय...</h1>
+    <p>Use the button to input Morse code.</p>
+    <div id="mode_indicator">
+      <p>Current Mode: <span id="current_mode">Input Mode</span></p>
+    </div>
+  </div>
+  <div class="container">
+    <div class="box">
+      <h2>Decoder</h2>
+      <div class="output">
+        <p>Code</p><span id="morse_code">Waiting...</span>
+        <p>Message</p><span id="decoded_message">Waiting...</span>
+        <p>Selected Words</p><span id="word_selection_list">Waiting...</span>
+      </div>
+    </div>
+    <div class="suggestions">
+      <div class="box">
+        <h2>Suggestions</h2>
+        <ul id="suggestions_list">
+          <li>Waiting...</li>
+        </ul>
+      </div>
+    </div>
+    <div class="sentence">
+      <div class="box">
+        <h2>Generated Sentence</h2>
+        <div class="output">
+          <span id="generated_sentence">Waiting...</span>
+        </div>
+      </div>
+    </div>
+    <div class="box saved-sentences-container">
+      <h2>Spoken Sentences</h2>
+      <ul id="saved-sentences-list" class="saved-sentences-list">
+        <li>No saved sentences yet.</li>
+      </ul>
+    </div>
+  </div>
+  <script>
+  // Text-to-Speech Utility Class
+  class TextToSpeechManager {
+  constructor() {
+    this.speechSynthesis = window.speechSynthesis;
+    this.spokenSentences = new Set();
+    this.lastSentencesCount = 0;
+  }
+
+  // Speaks a given sentence using Web Speech API
+  speak(sentence, options = {}) {
+    if (!sentence || this.spokenSentences.has(sentence)) return;
+
+    const utterance = new SpeechSynthesisUtterance(sentence);
+
+    utterance.rate = options.rate || 1.0;
+    utterance.pitch = options.pitch || 1.0;
+    utterance.volume = options.volume || 1.0;
+
+    // Optional voice selection
+    const voices = this.speechSynthesis.getVoices();
+    const englishVoice = voices.find(voice => 
+      voice.lang.includes('en-') && !voice.name.includes('Google')
+    );
+    if (englishVoice) {
+      utterance.voice = englishVoice;
+    }
+
+    utterance.onend = () => {
+      this.spokenSentences.add(sentence);
+    };
+
+    this.speechSynthesis.speak(utterance);
+  }
+
+  // Checks and speaks the latest added sentence
+  checkAndSpeakNewSentence(savedSentences) {
+    if (savedSentences && savedSentences.length > this.lastSentencesCount) {
+      const latestSentence = savedSentences[savedSentences.length - 1];
+      this.speak(latestSentence);
+      this.lastSentencesCount = savedSentences.length;
+    }
+  }
+  }
+
+  // Initialize Text-to-Speech Manager
+  const textToSpeechManager = new TextToSpeechManager();
+
+  // Enhanced fetchState function with speech integration
+  async function fetchState() {
+  try {
+    const response = await fetch('/get_state');
+    const state = await response.json();
+
+    // Update Morse Code Display
+    document.getElementById('morse_code').innerText = state.morse_code || 'Waiting...';
+
+    // Update Decoded Message
+    document.getElementById('decoded_message').innerText = state.decoded_message || 'Waiting...';
+
+    // Update Word Selection List
+    document.getElementById('word_selection_list').innerText = 
+      state.word_selection_list.join(', ') || 'Waiting...';
+
+    // Update Mode Indicator
+    const modeIndicator = document.getElementById('current_mode');
+    modeIndicator.innerText = state.selection_mode ? 'Selection Mode' : 'Input Mode';
+
+    // Update Suggestions List
+    const suggestionsList = document.getElementById('suggestions_list');
+    suggestionsList.innerHTML = '';
+
+    if (state.suggestions.length > 0) {
+      state.suggestions.forEach((word, index) => {
+        const li = document.createElement('li');
+        li.textContent = word;
+        if (index === state.highlighted_index) {
+          li.classList.add('highlight');
+        }
+        suggestionsList.appendChild(li);
+      });
+    } else {
+      suggestionsList.innerHTML = '<li>No suggestions yet.</li>';
+    }
+
+    // Update Generated Sentence
+    document.getElementById('generated_sentence').innerText = 
+      state.generated_sentence || 'Waiting...';
+
+    // Update Saved Sentences List with Speech Integration
+    const savedSentencesList = document.getElementById('saved-sentences-list');
+    savedSentencesList.innerHTML = '';
+
+    if (state.saved_sentences && state.saved_sentences.length > 0) {
+      // Check and speak new sentences
+      textToSpeechManager.checkAndSpeakNewSentence(state.saved_sentences);
+
+      state.saved_sentences.forEach((sentence, index) => {
+        const li = document.createElement('li');
+        li.textContent = `${index + 1}. ${sentence}`;
+        savedSentencesList.appendChild(li);
+      });
+    } else {
+      savedSentencesList.innerHTML = '<li>No saved sentences yet.</li>';
+    }
+
+  } catch (error) {
+    console.error('Error fetching state:', error);
+  }
+  }
+
+  // Browser Compatibility and Speech Initialization
+  function initializeSpeechSynthesis() {
+  if ('speechSynthesis' in window) {
+    // Preload voices to ensure they are available
+    window.speechSynthesis.onvoiceschanged = () => {
+      const voices = window.speechSynthesis.getVoices();
+      console.log(`Available voices: ${voices.length}`);
+    };
+  } else {
+    console.warn('Text-to-Speech is not supported in this browser');
+  }
+  }
+
+  // Initialize speech on page load
+  document.addEventListener('DOMContentLoaded', () => {
+  initializeSpeechSynthesis();
+
+  const manualSpeakButton = document.getElementById('manual-speak-btn');
+  if (manualSpeakButton) {
+    manualSpeakButton.addEventListener('click', manualSpeak);
+  }
+  });
+
+  setInterval(fetchState, 200);
+  </script>
+</body>
+</html>
